@@ -1,0 +1,975 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quiniela Demo</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --g:  #00c853;
+  --gd: #007c32;
+  --gl: rgba(0,200,83,0.12);
+  --o:  #ffd600;
+  --ol: rgba(255,214,0,0.12);
+  --r:  #ff1744;
+  --bg:   #080d08;
+  --bg2:  #0e160e;
+  --bg3:  #152015;
+  --card: #0b130b;
+  --br:   #1c321c;
+  --br2:  rgba(28,50,28,0.6);
+  --tx:   #c8e0c8;
+  --tx2:  #688068;
+  --wh:   #edf7ed;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{
+  background:var(--bg);
+  color:var(--tx);
+  font-family:'DM Mono',monospace;
+  min-height:100vh;
+  overflow-x:hidden;
+}
+.bg-grid{
+  position:fixed;inset:0;z-index:0;
+  background-image:
+    linear-gradient(rgba(0,200,83,0.03) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(0,200,83,0.03) 1px,transparent 1px);
+  background-size:40px 40px;
+  pointer-events:none;
+}
+.bg-glow{
+  position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:
+    radial-gradient(ellipse 50% 35% at 15% 15%,rgba(0,200,83,0.06) 0%,transparent 70%),
+    radial-gradient(ellipse 35% 50% at 85% 85%,rgba(255,214,0,0.04) 0%,transparent 70%);
+}
+
+/* AUTH */
+#pantalla-auth{
+  position:fixed;inset:0;z-index:200;
+  background:var(--bg);
+  display:flex;align-items:center;justify-content:center;
+  padding:20px;
+}
+.auth-box{
+  width:100%;max-width:420px;
+  background:var(--card);
+  border:1px solid var(--br);
+  border-radius:20px;
+  padding:40px 36px;
+  position:relative;
+  box-shadow:0 32px 80px rgba(0,0,0,0.6);
+}
+.auth-box::before{
+  content:'';position:absolute;inset:-1px;
+  border-radius:20px;
+  background:linear-gradient(135deg,rgba(0,200,83,0.2),transparent 50%,rgba(255,214,0,0.08));
+  -webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);
+  -webkit-mask-composite:xor;
+  mask-composite:exclude;
+  pointer-events:none;
+}
+.auth-logo{
+  font-family:'Playfair Display',serif;
+  font-size:28px;font-weight:900;
+  color:var(--wh);text-align:center;
+  letter-spacing:3px;margin-bottom:4px;
+}
+.auth-logo span{color:var(--g);}
+.auth-sub{
+  text-align:center;font-size:10px;
+  letter-spacing:3px;color:var(--tx2);
+  text-transform:uppercase;margin-bottom:32px;
+}
+.auth-tabs{
+  display:flex;gap:4px;
+  background:var(--bg2);border:1px solid var(--br);
+  border-radius:10px;padding:4px;margin-bottom:28px;
+}
+.auth-tab{
+  flex:1;padding:8px;border:none;
+  background:transparent;color:var(--tx2);
+  font-family:'DM Mono',monospace;
+  font-size:12px;letter-spacing:1px;
+  cursor:pointer;border-radius:7px;
+  transition:all .2s;text-transform:uppercase;
+}
+.auth-tab.act{background:var(--g);color:#000;font-weight:500;}
+.campo{margin-bottom:16px;}
+.campo label{
+  display:block;font-size:10px;letter-spacing:2px;
+  color:var(--tx2);text-transform:uppercase;margin-bottom:6px;
+}
+.campo input{
+  width:100%;background:var(--bg2);border:1px solid var(--br);
+  border-radius:8px;padding:12px 14px;color:var(--wh);
+  font-family:'DM Mono',monospace;font-size:14px;outline:none;
+  transition:border-color .2s,box-shadow .2s;
+}
+.campo input:focus{border-color:var(--g);box-shadow:0 0 0 3px rgba(0,200,83,0.1);}
+.campo input.err{border-color:var(--r);}
+.err-msg{font-size:11px;color:var(--r);margin-top:4px;display:none;}
+.err-msg.show{display:block;}
+.btn-auth{
+  width:100%;padding:14px;background:var(--g);color:#000;
+  border:none;border-radius:8px;font-family:'DM Mono',monospace;
+  font-size:13px;font-weight:500;letter-spacing:2px;
+  text-transform:uppercase;cursor:pointer;transition:all .2s;margin-top:8px;
+}
+.btn-auth:hover{background:var(--gd);box-shadow:0 4px 20px rgba(0,200,83,0.3);}
+.auth-nota{text-align:center;font-size:11px;color:var(--tx2);margin-top:20px;line-height:1.7;}
+.auth-nota a{color:var(--g);text-decoration:none;}
+.pw-wrap{position:relative;}
+.pw-wrap input{padding-right:44px;}
+.pw-toggle{
+  position:absolute;right:12px;top:50%;transform:translateY(-50%);
+  background:none;border:none;color:var(--tx2);cursor:pointer;
+  font-size:14px;padding:0;transition:color .2s;
+}
+.pw-toggle:hover{color:var(--g);}
+
+/* APP */
+#app{display:none;flex-direction:column;min-height:100vh;position:relative;z-index:10;}
+
+header{
+  position:sticky;top:0;z-index:100;height:60px;
+  border-bottom:1px solid var(--br2);
+  background:rgba(8,13,8,0.92);backdrop-filter:blur(12px);
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 24px;gap:16px;
+}
+.logo{font-family:'Playfair Display',serif;font-size:20px;font-weight:900;color:var(--wh);letter-spacing:2px;white-space:nowrap;}
+.logo span{color:var(--g);}
+.demo-pill{
+  background:var(--ol);border:1px solid rgba(255,214,0,0.25);
+  color:var(--o);padding:2px 8px;border-radius:4px;
+  font-size:9px;letter-spacing:2px;font-weight:500;vertical-align:middle;margin-left:6px;
+}
+.nav-tabs{display:flex;gap:3px;background:var(--bg2);border:1px solid var(--br);border-radius:8px;padding:3px;}
+.nav-tab{
+  padding:5px 16px;border-radius:6px;border:none;background:transparent;
+  color:var(--tx2);font-family:'DM Mono',monospace;font-size:11px;letter-spacing:1px;
+  cursor:pointer;transition:all .2s;text-transform:uppercase;
+}
+.nav-tab.act{background:var(--g);color:#000;font-weight:500;}
+.header-right{display:flex;align-items:center;gap:12px;font-size:11px;color:var(--tx2);white-space:nowrap;}
+.user-pill{
+  display:flex;align-items:center;gap:8px;
+  background:var(--bg2);border:1px solid var(--br);
+  border-radius:8px;padding:5px 12px;font-size:11px;color:var(--wh);cursor:pointer;transition:all .2s;
+}
+.user-pill:hover{border-color:var(--g);}
+.user-dot{width:6px;height:6px;background:var(--g);border-radius:50%;box-shadow:0 0 6px var(--g);}
+#reloj{color:var(--g);font-weight:500;letter-spacing:1px;}
+
+.ticker{position:relative;z-index:10;overflow:hidden;background:var(--bg2);border-bottom:1px solid var(--br2);padding:7px 0;}
+.ticker-track{white-space:nowrap;animation:tick 28s linear infinite;font-size:11px;color:var(--tx2);letter-spacing:3px;}
+@keyframes tick{from{transform:translateX(100vw);}to{transform:translateX(-100%);}}
+
+.vista{display:none;}
+.vista.act{display:block;}
+.container{max-width:1080px;margin:0 auto;padding:28px 20px;}
+
+.sorteo-hero{
+  background:linear-gradient(135deg,#0a1f0a,#080d08);
+  border:1px solid rgba(0,200,83,0.18);border-radius:18px;
+  padding:32px;text-align:center;margin-bottom:24px;
+  position:relative;overflow:hidden;
+}
+.sorteo-hero::after{
+  content:'';position:absolute;top:-60%;left:-60%;width:220%;height:220%;
+  background:radial-gradient(circle,rgba(0,200,83,0.04) 0%,transparent 55%);
+  animation:pulse 5s ease-in-out infinite;pointer-events:none;
+}
+@keyframes pulse{0%,100%{transform:scale(1);}50%{transform:scale(1.08);}}
+.sh-label{font-size:9px;letter-spacing:4px;color:var(--tx2);text-transform:uppercase;margin-bottom:4px;}
+.sh-fecha{font-size:12px;color:var(--g);letter-spacing:2px;margin-bottom:20px;}
+.sh-num{
+  font-family:'Playfair Display',serif;font-size:88px;font-weight:900;
+  color:var(--o);line-height:1;text-shadow:0 0 40px rgba(255,214,0,0.25);display:none;
+}
+.sh-num.show{display:block;animation:numIn .7s cubic-bezier(.175,.885,.32,1.275);}
+@keyframes numIn{from{transform:scale(.5);opacity:0;}to{transform:scale(1);opacity:1;}}
+.sh-placeholder{font-family:'Playfair Display',serif;font-size:64px;color:rgba(0,200,83,0.1);letter-spacing:12px;margin:8px 0;}
+.mult-badge{display:inline-block;background:var(--ol);border:1px solid rgba(255,214,0,0.25);color:var(--o);padding:4px 14px;border-radius:4px;font-size:11px;letter-spacing:2px;margin-top:8px;}
+
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+@media(max-width:720px){.g2{grid-template-columns:1fr;}}
+
+.saldo-bar{display:flex;align-items:center;justify-content:space-between;background:var(--bg2);border:1px solid var(--br);border-radius:10px;padding:14px 18px;margin-bottom:20px;}
+.saldo-num{font-family:'Playfair Display',serif;font-size:30px;font-weight:700;color:var(--g);}
+.saldo-num.low{color:var(--r);}
+.saldo-lbl{font-size:10px;letter-spacing:2px;color:var(--tx2);text-transform:uppercase;}
+
+.card{background:var(--card);border:1px solid var(--br);border-radius:12px;padding:22px;margin-bottom:20px;}
+.card-title{font-family:'Playfair Display',serif;font-size:15px;color:var(--wh);margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--br);letter-spacing:1px;}
+
+.num-grid{display:grid;grid-template-columns:repeat(10,1fr);gap:4px;margin-top:6px;}
+.nb{aspect-ratio:1;background:var(--bg2);border:1px solid var(--br);border-radius:6px;color:var(--tx2);font-family:'DM Mono',monospace;font-size:11px;cursor:pointer;transition:all .15s;padding:0;}
+.nb:hover{border-color:var(--g);color:var(--g);background:var(--gl);}
+.nb.sel{background:var(--g);color:#000;border-color:var(--g);font-weight:500;box-shadow:0 0 12px rgba(0,200,83,0.4);}
+
+.inp-g{margin-bottom:14px;}
+.inp-g label{display:block;font-size:10px;letter-spacing:2px;color:var(--tx2);text-transform:uppercase;margin-bottom:6px;}
+.inp-g input{
+  width:100%;background:var(--bg2);border:1px solid var(--br);border-radius:7px;
+  padding:11px 14px;color:var(--wh);font-family:'DM Mono',monospace;font-size:15px;
+  outline:none;transition:border-color .2s;-moz-appearance:textfield;
+}
+.inp-g input::-webkit-outer-spin-button,.inp-g input::-webkit-inner-spin-button{-webkit-appearance:none;}
+.inp-g input:focus{border-color:var(--g);box-shadow:0 0 0 3px rgba(0,200,83,0.1);}
+
+.resumen{background:var(--gl);border:1px solid rgba(0,200,83,0.18);border-radius:8px;padding:14px;margin:14px 0;display:none;}
+.resumen.show{display:block;}
+.res-row{display:flex;justify-content:space-between;align-items:center;padding:3px 0;font-size:12px;}
+.res-row.tot{border-top:1px solid rgba(0,200,83,0.2);margin-top:8px;padding-top:10px;font-size:14px;}
+.premio-num{color:var(--o);font-weight:500;font-size:17px;}
+
+.btn{width:100%;padding:13px;border:none;border-radius:8px;font-family:'DM Mono',monospace;font-size:12px;font-weight:500;letter-spacing:2px;cursor:pointer;text-transform:uppercase;transition:all .2s;}
+.btn-g{background:var(--g);color:#000;}
+.btn-g:hover:not(:disabled){background:var(--gd);transform:translateY(-1px);box-shadow:0 4px 16px rgba(0,200,83,0.3);}
+.btn-g:disabled{background:var(--br);color:var(--tx2);cursor:not-allowed;}
+.btn-sec{background:transparent;border:1px solid var(--br);color:var(--tx2);}
+.btn-sec:hover{border-color:var(--g);color:var(--g);}
+.btn-sm{padding:5px 12px;font-size:10px;letter-spacing:1px;font-weight:500;border-radius:6px;cursor:pointer;font-family:'DM Mono',monospace;border:none;transition:all .15s;text-transform:uppercase;}
+.btn-sm-g{background:var(--g);color:#000;}
+.btn-sm-g:hover{background:var(--gd);}
+.btn-sm-r{background:transparent;border:1px solid rgba(255,23,68,.35);color:var(--r);}
+.btn-sm-r:hover{background:rgba(255,23,68,.08);}
+
+.h-item{display:flex;align-items:center;gap:12px;padding:11px;border-radius:8px;border:1px solid var(--br);background:var(--bg2);margin-bottom:8px;}
+.h-item.won{border-color:rgba(255,214,0,.3);background:rgba(255,214,0,.04);}
+.h-item.lost{opacity:.55;}
+.h-num{font-family:'Playfair Display',serif;font-size:22px;font-weight:700;width:44px;text-align:center;color:var(--g);}
+.h-item.won .h-num{color:var(--o);}
+.h-info{flex:1;font-size:11px;}
+.h-fecha{color:var(--tx2);letter-spacing:1px;}
+.h-monto{text-align:right;font-size:12px;}
+.h-ap{color:var(--tx2);font-size:10px;}
+.h-p{color:var(--o);font-weight:500;font-size:15px;}
+.h-l{color:var(--r);}
+.badge{display:inline-block;padding:2px 7px;border-radius:4px;font-size:9px;letter-spacing:1px;font-weight:500;text-transform:uppercase;}
+.b-g{background:rgba(255,214,0,.12);color:var(--o);}
+.b-r{background:rgba(255,23,68,.1);color:var(--r);}
+.b-p{background:var(--gl);color:var(--g);}
+.ya-apostado{text-align:center;padding:14px;background:var(--gl);border:1px solid rgba(0,200,83,.2);border-radius:8px;margin-top:12px;font-size:12px;color:var(--g);display:none;}
+
+.stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:22px;}
+@media(max-width:600px){.stats-grid{grid-template-columns:1fr 1fr;}}
+.stat{background:var(--card);border:1px solid var(--br);border-radius:10px;padding:18px;text-align:center;}
+.stat-l{font-size:9px;letter-spacing:3px;color:var(--tx2);text-transform:uppercase;margin-bottom:6px;}
+.stat-v{font-family:'Playfair Display',serif;font-size:26px;font-weight:700;color:var(--g);}
+.stat-v.o{color:var(--o);}
+
+.sorteo-admin{background:linear-gradient(135deg,#0a1f0a,#080d08);border:1px solid rgba(255,214,0,.2);border-radius:16px;padding:28px;text-align:center;margin-bottom:22px;}
+.big-input{
+  font-family:'Playfair Display',serif;font-size:60px;font-weight:900;
+  background:transparent;border:none;border-bottom:2px solid var(--o);
+  color:var(--o);width:140px;text-align:center;outline:none;
+  padding:0;display:block;margin:14px auto;-moz-appearance:textfield;
+}
+.big-input::-webkit-outer-spin-button,.big-input::-webkit-inner-spin-button{-webkit-appearance:none;}
+
+.tbl{width:100%;border-collapse:collapse;font-size:12px;}
+.tbl th{font-size:9px;letter-spacing:2px;color:var(--tx2);text-transform:uppercase;text-align:left;padding:9px 11px;border-bottom:1px solid var(--br);}
+.tbl td{padding:11px;border-bottom:1px solid var(--br2);vertical-align:middle;}
+.tbl tr:last-child td{border-bottom:none;}
+.tbl tr:hover td{background:rgba(0,200,83,.02);}
+.fichas-inp{display:flex;gap:6px;align-items:center;}
+.fichas-inp input{width:72px;padding:5px 9px;font-size:13px;background:var(--bg2);border:1px solid var(--br);border-radius:6px;color:var(--wh);font-family:'DM Mono',monospace;outline:none;-moz-appearance:textfield;}
+.fichas-inp input::-webkit-outer-spin-button,.fichas-inp input::-webkit-inner-spin-button{-webkit-appearance:none;}
+
+.sol-item{display:flex;align-items:center;gap:10px;padding:11px 14px;background:var(--bg2);border:1px solid rgba(255,214,0,.2);border-radius:8px;margin-bottom:8px;flex-wrap:wrap;}
+.dot-blink{width:7px;height:7px;background:var(--o);border-radius:50%;flex-shrink:0;animation:blink 1.5s ease-in-out infinite;}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:.15;}}
+
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:400;align-items:center;justify-content:center;backdrop-filter:blur(6px);padding:20px;}
+.overlay.show{display:flex;}
+.modal{background:var(--card);border:1px solid var(--br);border-radius:18px;padding:32px;max-width:400px;width:100%;animation:mIn .28s ease;}
+@keyframes mIn{from{transform:scale(.9);opacity:0;}to{transform:scale(1);opacity:1;}}
+.modal-title{font-family:'Playfair Display',serif;font-size:18px;color:var(--wh);margin-bottom:14px;}
+.modal-body{font-size:12px;color:var(--tx2);line-height:1.8;margin-bottom:16px;}
+.modal-body strong{color:var(--g);}
+.cbu{background:var(--bg2);border:1px solid var(--br);border-radius:7px;padding:11px 14px;font-size:13px;letter-spacing:2px;color:var(--o);text-align:center;margin:10px 0;user-select:all;}
+.sep{height:1px;background:var(--br);margin:18px 0;}
+.btn-row{display:flex;gap:10px;}
+
+.toast{position:fixed;bottom:22px;right:22px;z-index:500;padding:13px 18px;border-radius:9px;font-size:12px;font-weight:500;letter-spacing:1px;transform:translateY(80px);opacity:0;transition:all .3s cubic-bezier(.175,.885,.32,1.275);max-width:300px;pointer-events:none;}
+.toast.show{transform:translateY(0);opacity:1;}
+.toast.ts{background:var(--g);color:#000;}
+.toast.te{background:var(--r);color:#fff;}
+.toast.ti{background:var(--bg3);border:1px solid var(--g);color:var(--g);}
+
+.empty{text-align:center;padding:32px;color:var(--tx2);}
+.empty .ic{font-size:36px;margin-bottom:10px;opacity:.35;}
+.saludo{background:linear-gradient(90deg,var(--gl),transparent);border-left:3px solid var(--g);border-radius:0 8px 8px 0;padding:10px 16px;margin-bottom:20px;font-size:13px;color:var(--tx);}
+.saludo span{color:var(--g);font-weight:500;}
+.sin-apuestas{text-align:center;padding:16px;font-size:12px;color:var(--tx2);border:1px dashed var(--br);border-radius:8px;}
+</style>
+</head>
+<body>
+<div class="bg-grid"></div>
+<div class="bg-glow"></div>
+
+<!-- AUTH -->
+<div id="pantalla-auth">
+  <div class="auth-box">
+    <div class="auth-logo">QUINI<span>LA</span></div>
+    <div class="auth-sub">Sistema de apuestas · Demo</div>
+    <div class="auth-tabs">
+      <button class="auth-tab act" id="tab-login" onclick="switchAuth('login')">Ingresar</button>
+      <button class="auth-tab" id="tab-reg" onclick="switchAuth('reg')">Registrarse</button>
+    </div>
+
+    <!-- LOGIN -->
+    <div id="form-login">
+      <div class="campo">
+        <label>Email</label>
+        <input type="email" id="l-email" placeholder="tu@email.com" autocomplete="email">
+        <div class="err-msg" id="l-email-err">Email no encontrado.</div>
+      </div>
+      <div class="campo">
+        <label>Contraseña</label>
+        <div class="pw-wrap">
+          <input type="password" id="l-pass" placeholder="••••••••" autocomplete="current-password">
+          <button class="pw-toggle" onclick="togglePw('l-pass',this)" tabindex="-1">👁</button>
+        </div>
+        <div class="err-msg" id="l-pass-err">Contraseña incorrecta.</div>
+      </div>
+      <button class="btn-auth" onclick="doLogin()">INGRESAR</button>
+      <div class="auth-nota">¿No tenés cuenta? <a href="#" onclick="switchAuth('reg');return false;">Registrate gratis</a></div>
+      <div class="auth-nota" style="margin-top:14px;padding-top:14px;border-top:1px solid var(--br);color:var(--tx2);font-size:10px;">
+        Admin demo: admin@quiniela.com / admin123
+      </div>
+    </div>
+
+    <!-- REGISTRO -->
+    <div id="form-reg" style="display:none;">
+      <div class="campo">
+        <label>Nombre completo</label>
+        <input type="text" id="r-nombre" placeholder="Juan Pérez" autocomplete="name">
+        <div class="err-msg" id="r-nombre-err">Ingresá tu nombre completo.</div>
+      </div>
+      <div class="campo">
+        <label>Email</label>
+        <input type="email" id="r-email" placeholder="tu@email.com" autocomplete="email">
+        <div class="err-msg" id="r-email-err">Email inválido o ya registrado.</div>
+      </div>
+      <div class="campo">
+        <label>Contraseña</label>
+        <div class="pw-wrap">
+          <input type="password" id="r-pass" placeholder="Mínimo 6 caracteres" autocomplete="new-password">
+          <button class="pw-toggle" onclick="togglePw('r-pass',this)" tabindex="-1">👁</button>
+        </div>
+        <div class="err-msg" id="r-pass-err">Mínimo 6 caracteres.</div>
+      </div>
+      <div class="campo">
+        <label>Confirmar contraseña</label>
+        <div class="pw-wrap">
+          <input type="password" id="r-pass2" placeholder="Repetí la contraseña" autocomplete="new-password">
+          <button class="pw-toggle" onclick="togglePw('r-pass2',this)" tabindex="-1">👁</button>
+        </div>
+        <div class="err-msg" id="r-pass2-err">Las contraseñas no coinciden.</div>
+      </div>
+      <button class="btn-auth" onclick="doRegistro()">CREAR CUENTA</button>
+      <div class="auth-nota">¿Ya tenés cuenta? <a href="#" onclick="switchAuth('login');return false;">Ingresá</a></div>
+    </div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <header>
+    <div class="logo">QUINI<span>LA</span><span class="demo-pill">DEMO</span></div>
+    <div class="nav-tabs">
+      <button class="nav-tab act" id="tab-apostar" onclick="cambiarVista('apostador',this)">Apostar</button>
+      <button class="nav-tab" id="tab-admin-btn" style="display:none" onclick="cambiarVista('admin',this)">Admin</button>
+    </div>
+    <div class="header-right">
+      <div id="reloj"></div>
+      <div class="user-pill" onclick="cerrarSesion()">
+        <div class="user-dot"></div>
+        <span id="header-user">—</span>
+        <span style="color:var(--tx2);font-size:10px;">salir</span>
+      </div>
+    </div>
+  </header>
+
+  <div class="ticker">
+    <div class="ticker-track">SORTEO DIARIO — MULTIPLICADOR ×60 — FICHAS VIRTUALES — SISTEMA DEMO — APOSTÁ CON RESPONSABILIDAD — SORTEO DIARIO — MULTIPLICADOR ×60 — FICHAS VIRTUALES — SISTEMA DEMO —</div>
+  </div>
+
+  <!-- VISTA APOSTADOR -->
+  <div class="vista act" id="vista-apostador">
+    <div class="container">
+      <div class="saludo">Hola, <span id="saludo-nombre">—</span>. El sorteo de hoy es a las 21:00 hs.</div>
+      <div class="saldo-bar">
+        <div>
+          <div class="saldo-lbl">Fichas disponibles</div>
+          <div class="saldo-num" id="saldo-val">0</div>
+        </div>
+        <button class="btn btn-sec" style="width:auto;padding:8px 16px;font-size:11px;" onclick="mostrarModalDeposito()">+ SOLICITAR FICHAS</button>
+      </div>
+      <div class="g2">
+        <div>
+          <div class="card">
+            <div class="card-title">Nueva Apuesta — Sorteo de Hoy</div>
+            <div class="inp-g">
+              <label>Elegí tu número (00–99)</label>
+              <div class="num-grid" id="num-grid"></div>
+            </div>
+            <div class="inp-g" style="margin-top:14px;">
+              <label>Número seleccionado</label>
+              <input type="number" id="num-input" min="0" max="99" placeholder="—"
+                oninput="syncDesdeInput()" style="font-size:34px;text-align:center;padding:14px;">
+            </div>
+            <div class="inp-g">
+              <label>Fichas a apostar</label>
+              <input type="number" id="fichas-inp" min="1" placeholder="Ej: 10" oninput="actualizarResumen()">
+            </div>
+            <div class="resumen" id="resumen">
+              <div class="res-row">
+                <span style="color:var(--tx2);">Número elegido</span>
+                <span id="res-num" style="font-family:'Playfair Display',serif;font-size:20px;color:var(--g);font-weight:700;">—</span>
+              </div>
+              <div class="res-row"><span style="color:var(--tx2);">Fichas apostadas</span><span id="res-fichas">—</span></div>
+              <div class="res-row tot"><span style="color:var(--wh);">Premio si ganás</span><span class="premio-num" id="res-premio">—</span></div>
+            </div>
+            <button class="btn btn-g" id="btn-apostar" disabled onclick="hacerApuesta()">CONFIRMAR APUESTA</button>
+            <div class="ya-apostado" id="ya-apostado">
+              ✓ Apuesta registrada para hoy.<br>
+              <span style="color:var(--tx2);font-size:10px;">Resultado a las 21:00 hs.</span>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class="sorteo-hero">
+            <div class="sh-label">Resultado del día</div>
+            <div class="sh-fecha" id="sh-fecha">—</div>
+            <div class="sh-placeholder" id="sh-placeholder">??</div>
+            <div class="sh-num" id="sh-num">—</div>
+            <div class="mult-badge">×60 por ficha apostada</div>
+          </div>
+          <div class="card">
+            <div class="card-title">Mis Apuestas</div>
+            <div id="historial"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- VISTA ADMIN -->
+  <div class="vista" id="vista-admin">
+    <div class="container">
+      <div class="stats-grid">
+        <div class="stat"><div class="stat-l">Usuarios</div><div class="stat-v" id="st-users">0</div></div>
+        <div class="stat"><div class="stat-l">Apostadores Hoy</div><div class="stat-v" id="st-ap">0</div></div>
+        <div class="stat"><div class="stat-l">Fichas Apostadas</div><div class="stat-v o" id="st-fichas">0</div></div>
+      </div>
+      <div class="sorteo-admin">
+        <div class="sh-label">Número ganador de hoy</div>
+        <input type="number" class="big-input" id="adm-num-ganador" min="0" max="99" placeholder="00"
+          oninput="this.value=Math.max(0,Math.min(99,parseInt(this.value)||0)).toString().padStart(2,'0')">
+        <div style="color:var(--tx2);font-size:11px;margin-bottom:18px;letter-spacing:1px;">Ingresá el número y ejecutá el sorteo</div>
+        <button class="btn btn-g" style="max-width:280px;margin:0 auto;display:block;" onclick="ejecutarSorteo()">⚡ EJECUTAR SORTEO</button>
+      </div>
+      <div class="g2">
+        <div>
+          <div class="card">
+            <div class="card-title">Apuestas del Día</div>
+            <div id="adm-apuestas"></div>
+          </div>
+        </div>
+        <div>
+          <div class="card">
+            <div class="card-title">Solicitudes de Fichas</div>
+            <div id="adm-solicitudes"></div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Usuarios Registrados</div>
+        <div style="overflow-x:auto;">
+          <table class="tbl">
+            <thead>
+              <tr>
+                <th>Nombre</th><th>Email</th><th>Fichas</th>
+                <th>Apuestas</th><th>Ganadas</th><th>Ajustar fichas</th>
+              </tr>
+            </thead>
+            <tbody id="adm-tabla"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL FICHAS -->
+<div class="overlay" id="modal-dep">
+  <div class="modal">
+    <div class="modal-title">Solicitar Fichas</div>
+    <div class="modal-body">
+      En producción, transferís el monto y el operador verifica y acredita manualmente.<br><br>
+      <strong>Cuenta para transferir:</strong>
+    </div>
+    <div class="cbu">CVU: 0000003100096996700000 1</div>
+    <div style="font-size:11px;color:var(--tx2);text-align:center;margin-bottom:4px;">alias: quinielademo.lab</div>
+    <div class="sep"></div>
+    <div class="inp-g">
+      <label>¿Cuántas fichas solicitás?</label>
+      <input type="number" id="modal-fichas" placeholder="100" min="10">
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-sec" style="flex:1;" onclick="cerrarModal('modal-dep')">CANCELAR</button>
+      <button class="btn btn-g" style="flex:2;" onclick="enviarSolicitud()">ENVIAR SOLICITUD</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ══════════════════════════════════════════
+// ESTADO
+// ══════════════════════════════════════════
+const DB = {
+  usuarios: {},
+  solicitudes: [],
+  sorteoHoy: null,
+  fechaHoy: new Date().toLocaleDateString('es-AR',{weekday:'long',year:'numeric',month:'long',day:'numeric'}),
+};
+
+// Admin pre-cargado
+DB.usuarios['admin@quiniela.com'] = {
+  nombre:'Administrador', email:'admin@quiniela.com',
+  pass:'admin123', fichas:0, apuestas:[], ganadas:0, esAdmin:true
+};
+
+let SESSION = null;
+let numeroSel = null;
+
+// ══════════════════════════════════════════
+// AUTH
+// ══════════════════════════════════════════
+function switchAuth(modo) {
+  document.getElementById('form-login').style.display = modo==='login' ? 'block' : 'none';
+  document.getElementById('form-reg').style.display   = modo==='reg'   ? 'block' : 'none';
+  document.getElementById('tab-login').classList.toggle('act', modo==='login');
+  document.getElementById('tab-reg').classList.toggle('act',   modo==='reg');
+  limpiarErrores();
+}
+
+function limpiarErrores() {
+  document.querySelectorAll('.err-msg').forEach(e => e.classList.remove('show'));
+  document.querySelectorAll('.campo input, .auth-box input').forEach(e => e.classList.remove('err'));
+}
+
+function mostrarError(msgId, inputId) {
+  document.getElementById(msgId).classList.add('show');
+  if (inputId) document.getElementById(inputId).classList.add('err');
+}
+
+function togglePw(id, btn) {
+  const inp = document.getElementById(id);
+  inp.type = inp.type === 'password' ? 'text' : 'password';
+  btn.textContent = inp.type === 'password' ? '👁' : '🙈';
+}
+
+function validarEmail(e) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e); }
+
+function doRegistro() {
+  limpiarErrores();
+  const nombre = document.getElementById('r-nombre').value.trim();
+  const email  = document.getElementById('r-email').value.trim().toLowerCase();
+  const pass   = document.getElementById('r-pass').value;
+  const pass2  = document.getElementById('r-pass2').value;
+  let ok = true;
+  if (nombre.length < 3)                         { mostrarError('r-nombre-err','r-nombre'); ok=false; }
+  if (!validarEmail(email) || DB.usuarios[email]) { mostrarError('r-email-err','r-email');   ok=false; }
+  if (pass.length < 6)                           { mostrarError('r-pass-err','r-pass');     ok=false; }
+  if (pass !== pass2)                            { mostrarError('r-pass2-err','r-pass2');   ok=false; }
+  if (!ok) return;
+
+  DB.usuarios[email] = { nombre, email, pass, fichas:0, apuestas:[], ganadas:0, esAdmin:false };
+  toast('¡Cuenta creada! Ahora podés ingresar.', 's');
+  switchAuth('login');
+  document.getElementById('l-email').value = email;
+  document.getElementById('l-pass').value  = '';
+}
+
+function doLogin() {
+  limpiarErrores();
+  const email = document.getElementById('l-email').value.trim().toLowerCase();
+  const pass  = document.getElementById('l-pass').value;
+  const u = DB.usuarios[email];
+  if (!u)            { mostrarError('l-email-err','l-email'); return; }
+  if (u.pass !== pass){ mostrarError('l-pass-err','l-pass');  return; }
+  SESSION = email;
+  entrarApp();
+}
+
+function entrarApp() {
+  const u = DB.usuarios[SESSION];
+  document.getElementById('pantalla-auth').style.display = 'none';
+  document.getElementById('app').style.display = 'flex';
+  document.getElementById('tab-admin-btn').style.display = u.esAdmin ? 'block' : 'none';
+  document.getElementById('header-user').textContent = u.nombre.split(' ')[0];
+  document.getElementById('saludo-nombre').textContent = u.nombre.split(' ')[0];
+  document.getElementById('sh-fecha').textContent = DB.fechaHoy;
+
+  if (DB.sorteoHoy !== null) mostrarNumeroGanador(DB.sorteoHoy);
+  else {
+    document.getElementById('sh-placeholder').style.display = 'block';
+    document.getElementById('sh-num').classList.remove('show');
+  }
+
+  generarGrid();
+  actualizarSaldo();
+  renderHistorial();
+  verificarApuestaHoy();
+  iniciarReloj();
+
+  if (u.esAdmin) {
+    cambiarVista('admin', document.getElementById('tab-admin-btn'));
+    document.getElementById('tab-apostar').classList.remove('act');
+    document.getElementById('tab-admin-btn').classList.add('act');
+  }
+}
+
+function cerrarSesion() {
+  SESSION = null; numeroSel = null;
+  document.getElementById('pantalla-auth').style.display = 'flex';
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('l-pass').value = '';
+  document.querySelectorAll('.vista').forEach(v => v.classList.remove('act'));
+  document.getElementById('vista-apostador').classList.add('act');
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('act'));
+  document.getElementById('tab-apostar').classList.add('act');
+  limpiarErrores();
+}
+
+// ══════════════════════════════════════════
+// RELOJ
+// ══════════════════════════════════════════
+function iniciarReloj() {
+  clearInterval(window._clock);
+  window._clock = setInterval(() => {
+    document.getElementById('reloj').textContent =
+      new Date().toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  }, 1000);
+}
+
+// ══════════════════════════════════════════
+// VISTAS
+// ══════════════════════════════════════════
+function cambiarVista(v, btn) {
+  document.querySelectorAll('.vista').forEach(e => e.classList.remove('act'));
+  document.querySelectorAll('.nav-tab').forEach(e => e.classList.remove('act'));
+  document.getElementById('vista-'+v).classList.add('act');
+  if (btn) btn.classList.add('act');
+  if (v === 'admin') renderAdmin();
+}
+
+// ══════════════════════════════════════════
+// GRID NÚMEROS
+// ══════════════════════════════════════════
+function generarGrid() {
+  const g = document.getElementById('num-grid');
+  g.innerHTML = '';
+  for (let i = 0; i <= 99; i++) {
+    const b = document.createElement('button');
+    b.className = 'nb'; b.id = 'nb-'+i;
+    b.textContent = i.toString().padStart(2,'0');
+    b.onclick = () => selNum(i);
+    g.appendChild(b);
+  }
+}
+
+function selNum(n) {
+  numeroSel = n;
+  document.querySelectorAll('.nb').forEach(b => b.classList.remove('sel'));
+  document.getElementById('nb-'+n).classList.add('sel');
+  document.getElementById('num-input').value = n.toString().padStart(2,'0');
+  actualizarResumen();
+}
+
+function syncDesdeInput() {
+  let v = parseInt(document.getElementById('num-input').value);
+  if (isNaN(v)) { numeroSel = null; return; }
+  v = Math.max(0, Math.min(99, v));
+  selNum(v);
+}
+
+// ══════════════════════════════════════════
+// SALDO
+// ══════════════════════════════════════════
+function actualizarSaldo() {
+  const u = DB.usuarios[SESSION];
+  const el = document.getElementById('saldo-val');
+  el.textContent = u.fichas + ' fichas';
+  el.className = 'saldo-num' + (u.fichas < 10 ? ' low' : '');
+}
+
+// ══════════════════════════════════════════
+// RESUMEN
+// ══════════════════════════════════════════
+function actualizarResumen() {
+  const fichas = parseInt(document.getElementById('fichas-inp').value);
+  const n = numeroSel;
+  const res = document.getElementById('resumen');
+  if (n !== null && fichas > 0) {
+    res.classList.add('show');
+    document.getElementById('res-num').textContent = n.toString().padStart(2,'0');
+    document.getElementById('res-fichas').textContent = fichas + ' fichas';
+    document.getElementById('res-premio').textContent = (fichas*60) + ' fichas';
+    document.getElementById('btn-apostar').disabled = false;
+  } else {
+    res.classList.remove('show');
+    document.getElementById('btn-apostar').disabled = true;
+  }
+}
+
+// ══════════════════════════════════════════
+// APUESTA
+// ══════════════════════════════════════════
+function hacerApuesta() {
+  const u = DB.usuarios[SESSION];
+  const fichas = parseInt(document.getElementById('fichas-inp').value);
+  const n = numeroSel;
+  if (n === null)          { toast('Elegí un número.','e'); return; }
+  if (!fichas || fichas<=0){ toast('Ingresá las fichas.','e'); return; }
+  if (fichas > u.fichas)   { toast('No tenés suficientes fichas.','e'); return; }
+
+  u.fichas -= fichas;
+  u.apuestas.unshift({ id:Date.now(), numero:n, fichas, premio:fichas*60, fecha:DB.fechaHoy, estado:'pendiente' });
+
+  actualizarSaldo();
+  renderHistorial();
+  verificarApuestaHoy();
+  document.getElementById('fichas-inp').value = '';
+  document.getElementById('resumen').classList.remove('show');
+  document.getElementById('btn-apostar').disabled = true;
+  toast('✓ Apuesta: N° '+n.toString().padStart(2,'0')+' — '+fichas+' fichas', 's');
+}
+
+function verificarApuestaHoy() {
+  const u = DB.usuarios[SESSION];
+  const ya = u.apuestas.some(a => a.fecha===DB.fechaHoy && a.estado==='pendiente');
+  document.getElementById('ya-apostado').style.display = ya ? 'block' : 'none';
+  if (ya) document.getElementById('btn-apostar').disabled = true;
+}
+
+// ══════════════════════════════════════════
+// HISTORIAL
+// ══════════════════════════════════════════
+function renderHistorial() {
+  const u = DB.usuarios[SESSION];
+  const el = document.getElementById('historial');
+  if (!u.apuestas.length) {
+    el.innerHTML = '<div class="empty"><div class="ic">🎯</div><div>Sin apuestas aún.</div></div>';
+    return;
+  }
+  el.innerHTML = u.apuestas.map(a => {
+    const cls = a.estado==='ganó' ? 'won' : a.estado==='perdió' ? 'lost' : '';
+    const bc  = a.estado==='ganó' ? 'b-g' : a.estado==='perdió' ? 'b-r' : 'b-p';
+    const txt = a.estado==='ganó' ? 'GANÓ' : a.estado==='perdió' ? 'PERDIÓ' : 'PENDIENTE';
+    const monto = a.estado==='ganó'
+      ? `<div class="h-ap">aposté ${a.fichas}</div><div class="h-p">+${a.premio} fichas</div>`
+      : a.estado==='perdió'
+      ? `<div class="h-ap">aposté ${a.fichas}</div><div class="h-l">−${a.fichas} fichas</div>`
+      : `<div class="h-ap">aposté ${a.fichas}</div><div style="color:var(--tx2);font-size:10px;">pendiente</div>`;
+    return `<div class="h-item ${cls}">
+      <div class="h-num">${a.numero.toString().padStart(2,'0')}</div>
+      <div class="h-info"><div><span class="badge ${bc}">${txt}</span></div><div class="h-fecha">${a.fecha}</div></div>
+      <div class="h-monto">${monto}</div>
+    </div>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════════
+// SORTEO ADMIN
+// ══════════════════════════════════════════
+function ejecutarSorteo() {
+  const v = parseInt(document.getElementById('adm-num-ganador').value);
+  if (isNaN(v)||v<0||v>99) { toast('Número inválido (00–99)','e'); return; }
+  DB.sorteoHoy = v;
+  let ganadores = [];
+
+  Object.values(DB.usuarios).forEach(u => {
+    u.apuestas.forEach(a => {
+      if (a.estado==='pendiente' && a.fecha===DB.fechaHoy) {
+        if (a.numero===v) { a.estado='ganó'; u.fichas+=a.premio; u.ganadas++; ganadores.push(u.nombre); }
+        else a.estado = 'perdió';
+      }
+    });
+  });
+
+  mostrarNumeroGanador(v);
+  if (SESSION) { actualizarSaldo(); renderHistorial(); }
+  renderAdmin();
+
+  const msg = ganadores.length
+    ? `🏆 N° ${v.toString().padStart(2,'0')} — Ganadores: ${ganadores.join(', ')}`
+    : `N° ${v.toString().padStart(2,'0')} — Sin ganadores esta ronda`;
+  toast(msg, ganadores.length ? 's' : 'i');
+  document.getElementById('adm-num-ganador').value = '';
+}
+
+function mostrarNumeroGanador(n) {
+  document.getElementById('sh-placeholder').style.display = 'none';
+  const el = document.getElementById('sh-num');
+  el.textContent = n.toString().padStart(2,'0');
+  el.classList.add('show');
+}
+
+// ══════════════════════════════════════════
+// ADMIN RENDER
+// ══════════════════════════════════════════
+function renderAdmin() {
+  const todos = Object.values(DB.usuarios).filter(u => !u.esAdmin);
+
+  document.getElementById('st-users').textContent = todos.length;
+  const apHoy = todos.filter(u => u.apuestas.some(a => a.fecha===DB.fechaHoy));
+  document.getElementById('st-ap').textContent = apHoy.length;
+  const totalF = todos.reduce((s,u) => s + u.apuestas.filter(a=>a.fecha===DB.fechaHoy).reduce((ss,a)=>ss+a.fichas,0), 0);
+  document.getElementById('st-fichas').textContent = totalF;
+
+  // Apuestas hoy
+  const elAp = document.getElementById('adm-apuestas');
+  const apuestasHoy = [];
+  todos.forEach(u => u.apuestas.filter(a=>a.fecha===DB.fechaHoy).forEach(a => apuestasHoy.push({u,a})));
+  if (!apuestasHoy.length) { elAp.innerHTML = '<div class="sin-apuestas">Sin apuestas hoy</div>'; }
+  else {
+    elAp.innerHTML = apuestasHoy.map(({u,a}) => {
+      const bc = a.estado==='ganó'?'b-g':a.estado==='perdió'?'b-r':'b-p';
+      return `<div style="display:flex;align-items:center;justify-content:space-between;
+        padding:9px 12px;background:var(--bg2);border:1px solid var(--br);
+        border-radius:8px;margin-bottom:7px;gap:8px;flex-wrap:wrap;">
+        <div style="min-width:100px;">
+          <div style="font-weight:500;color:var(--wh);font-size:12px;">${u.nombre}</div>
+          <div style="font-size:10px;color:var(--tx2);">${u.email}</div>
+        </div>
+        <div style="font-family:'Playfair Display',serif;font-size:18px;color:var(--g);">${a.numero.toString().padStart(2,'0')}</div>
+        <div style="font-size:11px;color:var(--tx2);">${a.fichas} fichas</div>
+        <span class="badge ${bc}">${a.estado}</span>
+      </div>`;
+    }).join('');
+  }
+
+  // Solicitudes
+  renderSolicitudes();
+
+  // Tabla
+  const tbody = document.getElementById('adm-tabla');
+  if (!todos.length) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--tx2);padding:20px;">Sin usuarios registrados</td></tr>';
+    return;
+  }
+  tbody.innerHTML = todos.map(u => {
+    const key = u.email.replace(/[^a-z0-9]/gi,'_');
+    return `<tr>
+      <td style="color:var(--wh);font-weight:500;">${u.nombre}</td>
+      <td style="color:var(--tx2);font-size:11px;">${u.email}</td>
+      <td style="color:var(--g);font-family:'Playfair Display',serif;font-size:16px;">${u.fichas}</td>
+      <td style="color:var(--tx2);">${u.apuestas.length}</td>
+      <td style="color:var(--o);">${u.ganadas}</td>
+      <td>
+        <div class="fichas-inp">
+          <input type="number" id="fa_${key}" placeholder="50" min="1">
+          <button class="btn-sm btn-sm-g" onclick="ajustarFichas('${u.email}',1,'fa_${key}')">+ DAR</button>
+          <button class="btn-sm btn-sm-r" onclick="ajustarFichas('${u.email}',-1,'fa_${key}')">− QUITAR</button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function ajustarFichas(email, signo, inputId) {
+  const inp = document.getElementById(inputId);
+  const cant = parseInt(inp.value);
+  if (isNaN(cant)||cant<=0)         { toast('Ingresá una cantidad válida','e'); return; }
+  const u = DB.usuarios[email];
+  if (signo===-1 && cant>u.fichas)  { toast('No puede quedar negativo','e'); return; }
+  u.fichas += signo * cant;
+  inp.value = '';
+  renderAdmin();
+  if (SESSION===email) actualizarSaldo();
+  toast(`${signo>0?'+':'-'}${cant} fichas para ${u.nombre}`, signo>0?'s':'i');
+}
+
+// ══════════════════════════════════════════
+// SOLICITUDES
+// ══════════════════════════════════════════
+function mostrarModalDeposito() { document.getElementById('modal-dep').classList.add('show'); }
+function cerrarModal(id) { document.getElementById(id).classList.remove('show'); }
+
+function enviarSolicitud() {
+  const fichas = parseInt(document.getElementById('modal-fichas').value);
+  if (!fichas||fichas<10) { toast('Mínimo 10 fichas','e'); return; }
+  const u = DB.usuarios[SESSION];
+  DB.solicitudes.push({ email:SESSION, nombre:u.nombre, fichas, hora:new Date().toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'}) });
+  cerrarModal('modal-dep');
+  document.getElementById('modal-fichas').value = '';
+  toast('Solicitud enviada. El admin acreditará las fichas.','i');
+}
+
+function renderSolicitudes() {
+  const el = document.getElementById('adm-solicitudes');
+  if (!DB.solicitudes.length) {
+    el.innerHTML = '<div class="empty"><div class="ic">📋</div><div>Sin solicitudes</div></div>';
+    return;
+  }
+  el.innerHTML = DB.solicitudes.map((s,i) => `
+    <div class="sol-item">
+      <div class="dot-blink"></div>
+      <div style="flex:1;">
+        <div style="font-weight:500;color:var(--wh);font-size:12px;">${s.nombre}</div>
+        <div style="font-size:10px;color:var(--tx2);">${s.email} · ${s.hora}</div>
+      </div>
+      <div style="font-size:13px;color:var(--o);font-weight:500;">${s.fichas} fichas</div>
+      <button class="btn-sm btn-sm-g" onclick="aprobarSolicitud(${i})">APROBAR</button>
+    </div>
+  `).join('');
+}
+
+function aprobarSolicitud(i) {
+  const s = DB.solicitudes[i];
+  DB.usuarios[s.email].fichas += s.fichas;
+  DB.solicitudes.splice(i, 1);
+  renderAdmin();
+  if (SESSION===s.email) actualizarSaldo();
+  toast(`✓ ${s.fichas} fichas acreditadas a ${s.nombre}`, 's');
+}
+
+// ══════════════════════════════════════════
+// TOAST
+// ══════════════════════════════════════════
+let _tt;
+function toast(msg, tipo='i') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = `toast t${tipo} show`;
+  clearTimeout(_tt);
+  _tt = setTimeout(() => el.classList.remove('show'), 3600);
+}
+
+// Cerrar modal al click afuera
+document.getElementById('modal-dep').addEventListener('click', function(e) {
+  if (e.target===this) cerrarModal('modal-dep');
+});
+
+// Enter para login/registro
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Enter') return;
+  if (document.getElementById('pantalla-auth').style.display === 'none') return;
+  if (document.getElementById('form-login').style.display !== 'none') doLogin();
+  else doRegistro();
+});
+</script>
+</body>
+</html>
